@@ -103,7 +103,7 @@ app.post('/login', (req, res) => {
 app.post('/generate', authenticateToken, async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
 
-    db.get('SELECT daily_generations, last_generation_date FROM users WHERE id = ?', [req.user.id], (err, user) => {
+    db.get('SELECT daily_generations, last_generation_date FROM users WHERE id = ?', [req.user.id], async (err, user) => { // Added async here
         if (err) {
             console.error('Error fetching user generation count:', err.message);
             return res.status(500).json({ error: 'Failed to check generation count' });

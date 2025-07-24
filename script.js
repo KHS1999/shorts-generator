@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('login-btn');
     const registerBtn = document.getElementById('register-btn');
     const authMessage = document.getElementById('auth-message');
+    const upgradeBtn = document.getElementById('upgrade-btn'); // New upgrade button
 
     let userToken = localStorage.getItem('userToken');
 
@@ -84,6 +85,33 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Login error:', error);
             authMessage.textContent = '서버 오류 발생';
             authMessage.style.color = 'red';
+        }
+    });
+
+    // Upgrade button click
+    upgradeBtn.addEventListener('click', async () => {
+        if (!userToken) {
+            alert('로그인 후 이용해주세요.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/pay', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                },
+            });
+            const data = await response.json();
+            if (response.ok && data.approval_url) {
+                window.location.href = data.approval_url; // Redirect to PayPal for approval
+            } else {
+                alert(data.error || '결제 시작 실패');
+            }
+        } catch (error) {
+            console.error('Payment initiation error:', error);
+            alert('결제 시작 중 오류 발생');
         }
     });
 

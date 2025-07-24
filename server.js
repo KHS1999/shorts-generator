@@ -3,9 +3,17 @@ const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const paypal = require('paypal-rest-sdk');
 
 const app = express();
 const port = 3000;
+
+// Configure PayPal SDK
+paypal.configure({
+    'mode': 'sandbox', // 'sandbox' or 'live'
+    'client_id': process.env.PAYPAL_CLIENT_ID,
+    'client_secret': process.env.PAYPAL_CLIENT_SECRET
+});
 
 // Middleware to verify JWT token
 const authenticateToken = (req, res, next) => {
@@ -33,7 +41,8 @@ const db = new sqlite3.Database('./database.db', (err) => {
             email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
             daily_generations INTEGER DEFAULT 0,
-            last_generation_date TEXT
+            last_generation_date TEXT,
+            is_premium INTEGER DEFAULT 0
         )`);
         console.log('Users table checked/created.');
     }
@@ -99,6 +108,85 @@ app.post('/login', (req, res) => {
     });
 });
 
+// Create PayPal payment
+app.post('/pay', authenticateToken, (req, res) => {
+    const create_payment_json = {
+        "intent": "sale",
+        "payer": {
+            "payment_method": "paypal"
+        },
+        "redirect_urls": {
+            "return_url": "http://localhost:3000/success", // Will be updated for deployment
+            "cancel_url": "http://localhost:3000/cancel"   // Will be updated for deployment
+        },
+        "transactions": [{
+            "item_list": {
+                "items": [{
+                    "name": "Premium Subscription",
+                    "sku": "001",
+                    "price": "9.99",
+                    "currency": "USD",
+                    "quantity": "1"
+                }]
+            },
+            "amount": {
+                "currency": "USD",
+                "total": "9.99"
+            },
+            "description": "Premium subscription for AI Shorts Script Generator"
+        }]
+    };
+
+    paypal.payment.create(create_payment_json, function (error, payment) {
+        if (error) {
+            console.error('PayPal payment creation error:', error.response);
+            res.status(500).json({ error: 'Failed to create PayPal payment' });
+        } else {
+            for(let i = 0; i < payment.links.length; i++){
+                if(payment.links[i].rel === 'approval_url'){
+                    res.json({ approval_url: payment.links[i].href });
+                }
+            }
+        }
+    });
+});
+
+// Execute PayPal payment
+app.get('/execute-payment', authenticateToken, (req, res) => {
+    const payerId = req.query.PayerID;
+    const paymentId = req.query.paymentId;
+
+    const execute_payment_json = {
+        "payer_id": payerId,
+        "transactions": [{
+            "amount": {
+                "currency": "USD",
+                "total": "9.99"
+            }
+        }]
+    };
+
+    paypal.payment.execute(paymentId, execute_payment_json, function (error, payment) {
+        if (error) {
+            console.error('PayPal payment execution error:', error.response);
+            res.status(500).json({ error: 'Failed to execute PayPal payment' });
+        } else {
+            if (payment.state === 'approved') {
+                // Update user to premium
+                db.run('UPDATE users SET is_premium = 1 WHERE id = ?', [req.user.id], (err) => {
+                    if (err) {
+                        console.error('Error updating premium status:', err.message);
+                        return res.redirect('/cancel?message=Premium_update_failed');
+                    }
+                    res.redirect('/success');
+                });
+            } else {
+                res.redirect('/cancel?message=Payment_not_approved');
+            }
+        }
+    });
+});
+
 // API endpoint to generate the script
 app.post('/generate', authenticateToken, async (req, res) => {
     const { topic, tone } = req.body; // Define topic and tone here
@@ -119,6 +207,13 @@ app.post('/generate', authenticateToken, async (req, res) => {
 
         let currentGenerations = user.daily_generations;
         let lastDate = user.last_generation_date;
+        const isPremium = user.is_premium; // Get premium status
+
+        // If user is premium, skip limit check
+        if (isPremium) {
+            await generateScriptAndRespond(req, res, topic, tone);
+            return;
+        }
 
         // Reset count if it's a new day
         if (lastDate !== today) {

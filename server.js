@@ -131,9 +131,13 @@ app.post('/generate', authenticateToken, async (req, res) => {
             }
         });
 
-    try {
-        const { topic, tone } = req.body;
+        // Move AI generation logic here
+        generateScriptAndRespond(req, res, topic, tone);
+    });
+});
 
+async function generateScriptAndRespond(req, res, topic, tone) {
+    try {
         if (!topic) {
             return res.status(400).json({ error: 'Topic is required' });
         }
@@ -169,7 +173,7 @@ app.post('/generate', authenticateToken, async (req, res) => {
         console.error('Error generating script:', error);
         res.status(500).json({ error: 'Failed to generate script' });
     }
-});
+}
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);

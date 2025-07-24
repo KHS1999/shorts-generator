@@ -36,7 +36,7 @@ app.post('/generate', async (req, res) => {
         4.  **Outro (Last 7 seconds):** End with a strong call to action (e.g., "Comment your thoughts below!", "Follow for more secrets like this!") and a memorable closing shot.
 
         **Output Format:**
-        - Divide the script into scenes: `[SCENE 1]`, `[SCENE 2]`, etc.
+        - Divide the script into scenes: '[SCENE 1]', '[SCENE 2]', etc.
         - For each scene, describe the **VISUAL** (what we see on screen, including text overlays) and the **AUDIO** (narration, sound effects, BGM suggestions).
         - The narration should be conversational and energetic.
 

@@ -6,6 +6,87 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultContainer = document.getElementById('result-container');
     const copyBtn = document.getElementById('copy-btn');
 
+    // Auth elements
+    const authModal = document.getElementById('auth-modal');
+    const authEmailInput = document.getElementById('auth-email');
+    const authPasswordInput = document.getElementById('auth-password');
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const authMessage = document.getElementById('auth-message');
+
+    let userToken = localStorage.getItem('userToken');
+
+    // Show modal if not logged in
+    if (!userToken) {
+        authModal.style.display = 'flex';
+    } else {
+        authModal.style.display = 'none';
+    }
+
+    // Register button click
+    registerBtn.addEventListener('click', async () => {
+        const email = authEmailInput.value;
+        const password = authPasswordInput.value;
+
+        if (!email || !password) {
+            authMessage.textContent = '이메일과 비밀번호를 입력해주세요.';
+            return;
+        }
+
+        try {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                authMessage.textContent = data.message + ' 이제 로그인해주세요.';
+                authMessage.style.color = 'green';
+            } else {
+                authMessage.textContent = data.error || '회원가입 실패';
+                authMessage.style.color = 'red';
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            authMessage.textContent = '서버 오류 발생';
+            authMessage.style.color = 'red';
+        }
+    });
+
+    // Login button click
+    loginBtn.addEventListener('click', async () => {
+        const email = authEmailInput.value;
+        const password = authPasswordInput.value;
+
+        if (!email || !password) {
+            authMessage.textContent = '이메일과 비밀번호를 입력해주세요.';
+            return;
+        }
+
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                localStorage.setItem('userToken', data.token);
+                userToken = data.token;
+                authModal.style.display = 'none';
+                authMessage.textContent = '';
+            } else {
+                authMessage.textContent = data.error || '로그인 실패';
+                authMessage.style.color = 'red';
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            authMessage.textContent = '서버 오류 발생';
+            authMessage.style.color = 'red';
+        }
+    });
+
     generateBtn.addEventListener('click', () => {
         const topic = topicInput.value;
         const tone = toneSelect.value;
@@ -24,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userToken}` // Add token to header
             },
             body: JSON.stringify({ topic, tone }),
         })

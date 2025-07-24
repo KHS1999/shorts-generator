@@ -89,30 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Upgrade button click
-    upgradeBtn.addEventListener('click', async () => {
-        if (!userToken) {
-            alert('로그인 후 이용해주세요.');
-            return;
-        }
-
-        try {
-            const response = await fetch('/pay', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userToken}`
-                },
-            });
-            const data = await response.json();
-            if (response.ok && data.approval_url) {
-                window.location.href = data.approval_url; // Redirect to PayPal for approval
-            } else {
-                alert(data.error || '결제 시작 실패');
-            }
-        } catch (error) {
-            console.error('Payment initiation error:', error);
-            alert('결제 시작 중 오류 발생');
-        }
+    upgradeBtn.addEventListener('click', () => {
+        // Replace this with your actual PayPal.me link or other payment link
+        const paymentLink = "https://paypal.me/yourusername/9.99"; // Example: PayPal.me link for $9.99
+        window.open(paymentLink, '_blank'); // Open in new tab
+        alert("결제 완료 후, 이메일(your_email@example.com)로 결제 완료 사실과 회원가입 이메일을 보내주시면 프리미엄으로 전환해 드립니다.");
     });
 
     generateBtn.addEventListener('click', () => {

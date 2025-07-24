@@ -40,7 +40,7 @@ app.post('/generate', async (req, res) => {
         - For each scene, describe the **VISUAL** (what we see on screen, including text overlays) and the **AUDIO** (narration, sound effects, BGM suggestions).
         - The narration should be conversational and energetic.
 
-        Now, write the script.
+        Now, write the script in **Korean**.
         `;
 
         const result = await model.generateContent(prompt);

@@ -13,16 +13,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('login-btn');
     const registerBtn = document.getElementById('register-btn');
     const authMessage = document.getElementById('auth-message');
-    const upgradeBtn = document.getElementById('upgrade-btn'); // New upgrade button
+    const upgradeBtn = document.getElementById('upgrade-btn');
+    const userInfoDiv = document.getElementById('user-info');
+    const userEmailSpan = document.getElementById('user-email');
+    const premiumStatusSpan = document.getElementById('premium-status');
+    const logoutBtn = document.getElementById('logout-btn');
 
     let userToken = localStorage.getItem('userToken');
 
-    // Show modal if not logged in
-    if (!userToken) {
-        authModal.style.display = 'flex';
-    } else {
-        authModal.style.display = 'none';
-    }
+    // Function to update UI based on login status
+    const updateUI = async () => {
+        if (userToken) {
+            authModal.style.display = 'none';
+            userInfoDiv.style.display = 'block';
+            try {
+                const response = await fetch('/user-info', {
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`
+                    }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    userEmailSpan.textContent = data.email;
+                    premiumStatusSpan.textContent = data.is_premium ? '프리미엄 사용자' : '무료 사용자';
+                    if (data.is_premium) {
+                        upgradeBtn.style.display = 'none';
+                    } else {
+                        upgradeBtn.style.display = 'inline-block';
+                    }
+                } else {
+                    console.error('Failed to fetch user info:', data.error);
+                    // If token is invalid, clear it and show login modal
+                    localStorage.removeItem('userToken');
+                    userToken = null;
+                    authModal.style.display = 'flex';
+                    userInfoDiv.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error fetching user info:', error);
+                // If network error, clear token and show login modal
+                localStorage.removeItem('userToken');
+                userToken = null;
+                authModal.style.display = 'flex';
+                userInfoDiv.style.display = 'none';
+            }
+        } else {
+            authModal.style.display = 'flex';
+            userInfoDiv.style.display = 'none';
+        }
+    };
+
+    // Initial UI update
+    updateUI();
 
     // Register button click
     registerBtn.addEventListener('click', async () => {
@@ -77,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 userToken = data.token;
                 authModal.style.display = 'none';
                 authMessage.textContent = '';
+                updateUI(); // Update UI after successful login
             } else {
                 authMessage.textContent = data.error || '로그인 실패';
                 authMessage.style.color = 'red';
@@ -86,6 +129,14 @@ document.addEventListener('DOMContentLoaded', () => {
             authMessage.textContent = '서버 오류 발생';
             authMessage.style.color = 'red';
         }
+    });
+
+    // Logout button click
+    logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('userToken');
+        userToken = null;
+        updateUI(); // Update UI after logout
+        alert('로그아웃되었습니다.');
     });
 
     // Upgrade button click

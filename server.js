@@ -100,6 +100,44 @@ app.post('/login', (req, res) => {
     });
 });
 
+// Admin endpoint to update user premium status
+app.post('/admin/update-premium', (req, res) => {
+    const { adminSecret, email, isPremium } = req.body;
+
+    if (adminSecret !== process.env.ADMIN_SECRET) {
+        return res.status(403).json({ error: 'Forbidden: Invalid Admin Secret' });
+    }
+
+    if (!email || (isPremium !== 0 && isPremium !== 1)) {
+        return res.status(400).json({ error: 'Email and valid isPremium status (0 or 1) are required' });
+    }
+
+    db.run('UPDATE users SET is_premium = ? WHERE email = ?', [isPremium, email], function(err) {
+        if (err) {
+            console.error('Error updating premium status:', err.message);
+            return res.status(500).json({ error: 'Failed to update premium status' });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ message: `User ${email} premium status updated to ${isPremium}` });
+    });
+});
+
+// Get user info
+app.get('/user-info', authenticateToken, (req, res) => {
+    db.get('SELECT email, is_premium FROM users WHERE id = ?', [req.user.id], (err, user) => {
+        if (err) {
+            console.error('Error fetching user info:', err.message);
+            return res.status(500).json({ error: 'Failed to fetch user info' });
+        }
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ email: user.email, is_premium: user.is_premium === 1 });
+    });
+});
+
 // API endpoint to generate the script
 app.post('/generate', authenticateToken, async (req, res) => {
     const { topic, tone } = req.body; // Define topic and tone here

@@ -17,7 +17,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // API endpoint to generate the script
 app.post('/generate', async (req, res) => {
     try {
-        const { topic } = req.body;
+        const { topic, tone } = req.body;
 
         if (!topic) {
             return res.status(400).json({ error: 'Topic is required' });
@@ -28,6 +28,7 @@ app.post('/generate', async (req, res) => {
         const prompt = `
         You are a world-class scriptwriter for viral YouTube Shorts, known for creating addictive and highly engaging content.
         Your goal is to write a script for a 1-minute video about the topic: **"${topic}"**.
+        The script should have a **${tone}** tone.
 
         **Instructions:**
         1.  **Hook (First 3 seconds):** Start with a provocative question, a surprising statement, or a visually arresting scene description that immediately grabs the viewer's attention.

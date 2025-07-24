@@ -1,12 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     const generateBtn = document.getElementById('generate-btn');
     const topicInput = document.getElementById('topic-input');
+    const toneSelect = document.getElementById('tone-select');
     const scriptOutput = document.getElementById('script-output');
     const resultContainer = document.getElementById('result-container');
     const copyBtn = document.getElementById('copy-btn');
 
     generateBtn.addEventListener('click', () => {
         const topic = topicInput.value;
+        const tone = toneSelect.value;
 
         if (!topic) {
             alert('주제를 입력해주세요!');
@@ -23,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ topic }),
+            body: JSON.stringify({ topic, tone }),
         })
         .then(response => response.json())
         .then(data => {

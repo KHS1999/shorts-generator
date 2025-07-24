@@ -101,9 +101,14 @@ app.post('/login', (req, res) => {
 
 // API endpoint to generate the script
 app.post('/generate', authenticateToken, async (req, res) => {
+    const { topic, tone } = req.body; // Define topic and tone here
+    if (!topic) {
+        return res.status(400).json({ error: 'Topic is required' });
+    }
+
     const today = new Date().toISOString().split('T')[0];
 
-    db.get('SELECT daily_generations, last_generation_date FROM users WHERE id = ?', [req.user.id], async (err, user) => {
+    db.get('SELECT daily_generations, last_generation_date FROM users WHERE id = ?', [req.user.id], async (err, user) => { // Added async here
         if (err) {
             console.error('Error fetching user generation count:', err.message);
             return res.status(500).json({ error: 'Failed to check generation count' });
@@ -140,9 +145,10 @@ app.post('/generate', authenticateToken, async (req, res) => {
 
 async function generateScriptAndRespond(req, res, topic, tone) {
     try {
-        if (!topic) {
-            return res.status(400).json({ error: 'Topic is required' });
-        }
+        // No need to check topic here again as it's checked above
+        // if (!topic) {
+        //     return res.status(400).json({ error: 'Topic is required' });
+        // }
 
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 

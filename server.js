@@ -125,14 +125,13 @@ app.post('/generate', authenticateToken, async (req, res) => {
         }
 
         // Increment generation count
-        db.run('UPDATE users SET daily_generations = ?, last_generation_date = ? WHERE id = ?', [currentGenerations + 1, today, req.user.id], (err) => {
+        db.run('UPDATE users SET daily_generations = ?, last_generation_date = ? WHERE id = ?', [currentGenerations + 1, today, req.user.id], async (err) => { // Added async here
             if (err) {
                 console.error('Error updating generation count:', err.message);
             }
+            // Move AI generation logic here
+            await generateScriptAndRespond(req, res, topic, tone);
         });
-
-        // Move AI generation logic here
-        generateScriptAndRespond(req, res, topic, tone);
     });
 });
 

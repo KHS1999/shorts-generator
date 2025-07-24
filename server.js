@@ -191,6 +191,12 @@ app.post('/generate', authenticateToken, async (req, res) => {
 
 async function generateScriptAndRespond(req, res, topic, tone) {
     try {
+        const { keyword } = req.body; // Get keyword from request body
+
+        // Check if user is premium to use keyword feature
+        if (keyword && req.user.is_premium !== 1) {
+            return res.status(403).json({ error: '키워드 포함 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
+        }
         // No need to check topic here again as it's checked above
         // if (!topic) {
         //     return res.status(400).json({ error: 'Topic is required' });
@@ -202,6 +208,11 @@ async function generateScriptAndRespond(req, res, topic, tone) {
         You are a world-class scriptwriter for viral YouTube Shorts, known for creating addictive and highly engaging content.
         Your goal is to write a script for a 1-minute video about the topic: **"${topic}"**.
         The script should have a **${tone}** tone.
+
+        ${keyword ? `
+        **Important:** The script MUST include the following keyword(s): "${keyword}".
+        Integrate it naturally and smoothly into the script.
+        ` : ''}
 
         **Instructions:**
         1.  **Hook (First 3 seconds):** Start with a provocative question, a surprising statement, or a visually arresting scene description that immediately grabs the viewer's attention.

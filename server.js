@@ -26,17 +26,21 @@ app.post('/generate', async (req, res) => {
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         const prompt = `
-        You are an expert in creating viral YouTube Shorts scripts.
-        Create a concise and engaging 1-minute script for the following topic:
+        You are a world-class scriptwriter for viral YouTube Shorts, known for creating addictive and highly engaging content.
+        Your goal is to write a script for a 1-minute video about the topic: **"${topic}"**.
 
-        **Topic:** ${topic}
+        **Instructions:**
+        1.  **Hook (First 3 seconds):** Start with a provocative question, a surprising statement, or a visually arresting scene description that immediately grabs the viewer's attention.
+        2.  **Build-Up (Next 20 seconds):** Introduce the core topic. Build tension or curiosity. Use simple language and quick cuts.
+        3.  **Climax/Payoff (Next 20 seconds):** Reveal the most interesting fact, the solution to the problem, or the main point of the video. This should be the "Aha!" moment.
+        4.  **Outro (Last 7 seconds):** End with a strong call to action (e.g., "Comment your thoughts below!", "Follow for more secrets like this!") and a memorable closing shot.
 
-        The script should have three parts:
-        1.  **Intro (Hook):** Grab the viewer's attention within the first 3 seconds.
-        2.  **Body:** Provide 2-3 interesting and easy-to-understand facts or points.
-        3.  **Outro (Call to Action):** Encourage viewers to like, comment, and subscribe.
+        **Output Format:**
+        - Divide the script into scenes: `[SCENE 1]`, `[SCENE 2]`, etc.
+        - For each scene, describe the **VISUAL** (what we see on screen, including text overlays) and the **AUDIO** (narration, sound effects, BGM suggestions).
+        - The narration should be conversational and energetic.
 
-        Format the output clearly with headings for each part (e.g., #Intro, #Body, #Outro) and include suggestions for visuals or on-screen text.
+        Now, write the script.
         `;
 
         const result = await model.generateContent(prompt);

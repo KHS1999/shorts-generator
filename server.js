@@ -191,7 +191,65 @@ app.post('/generate', authenticateToken, async (req, res) => {
     });
 });
 
-async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength) {
+async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength) { // Add scriptLength to signature
+    try {
+        const { keyword } = req.body; // Get keyword from request body
+        const parsedScriptLength = parseInt(scriptLength, 10); // Ensure scriptLength is an integer
+
+        // Check if user is premium to use keyword feature
+        if (keyword && isPremiumStatus !== 1) { // Use isPremiumStatus here
+            return res.status(403).json({ error: '키워드 포함 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
+        }
+
+        // Check if user is premium to use longer script feature
+        if (parsedScriptLength > 1 && isPremiumStatus !== 1) { // Use parsedScriptLength here
+            return res.status(403).json({ error: '긴 대본 생성 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
+        }
+
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+        let lengthInstruction = `Your goal is to write a script for a ${parsedScriptLength}-minute video about the topic: **"${topic}"**.`;
+        if (parsedScriptLength > 1) {
+            lengthInstruction += `
+        **Crucial:** Ensure the script is detailed and expansive enough to genuinely fill ${parsedScriptLength} minutes. This means including more scenes, more detailed descriptions, and elaborating on points. Do NOT just write a 1-minute script and repeat it.`;
+        }
+
+        const prompt = `
+        You are a world-class scriptwriter for viral YouTube Shorts, known for creating addictive and highly engaging content.
+        ${lengthInstruction}
+        The script should have a **${tone}** tone.
+        It should be optimized for **${platform}**.
+
+        ${keyword ? `
+        **Important:** The script MUST include the following keyword(s): "${keyword}".
+        Integrate it naturally and smoothly into the script.
+        ` : ''}
+
+        **Instructions:**
+        1.  **Hook (First 3 seconds):** Start with a provocative question, a surprising statement, or a visually arresting scene description that immediately grabs the viewer's attention.
+        2.  **Build-Up (Next 20 seconds):** Introduce the core topic. Build tension or curiosity. Use simple language and quick cuts.
+        3.  **Climax/Payoff (Next 20 seconds):** Reveal the most interesting fact, the solution to the problem, or the main point of the video. This should be the "Aha!" moment.
+        4.  **Outro (Last 7 seconds):** End with a strong call to action (e.g., "Comment your thoughts below!", "Follow for more secrets like this!") and a memorable closing shot.
+
+        **Output Format:**
+        - Divide the script into scenes: '[SCENE 1]', '[SCENE 2]', etc.
+        - For each scene, describe the **VISUAL** (what we see on screen, including text overlays) and the **AUDIO** (narration, sound effects, BGM suggestions).
+        - The narration should be conversational and energetic.
+
+        Now, write the script in **Korean**.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const script = await response.text();
+
+        res.json({ script });
+
+    } catch (error) {
+        console.error('Error generating script:', error);
+        res.status(500).json({ error: 'Failed to generate script' });
+    }
+}
     try {
         const { keyword, platform } = req.body; // Get keyword and platform from request body
         const parsedScriptLength = parseInt(scriptLength, 10); // Ensure scriptLength is an integer

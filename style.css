@@ -253,6 +253,8 @@ p {
     min-height: 200px;
     color: #444;
     font-size: 1.05em;
+    width: calc(100% - 50px); /* Adjust width for padding */
+    resize: vertical; /* Allow vertical resizing */
 }
 
 /* Modal Styles */

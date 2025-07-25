@@ -187,17 +187,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.error) {
                 throw new Error(data.error);
             }
-            scriptOutput.innerText = data.script;
+            scriptOutput.value = data.script; // Assign to .value for textarea
         })
         .catch(error => {
             console.error('Error:', error);
-            scriptOutput.innerText = `대본 생성에 실패했습니다. 오류: ${error.message}`;
+            scriptOutput.value = `대본 생성에 실패했습니다. 오류: ${error.message}`;
         });
     });
 
     copyBtn.addEventListener('click', () => {
-        if (navigator.clipboard && scriptOutput.innerText) {
-            navigator.clipboard.writeText(scriptOutput.innerText).then(() => {
+        if (navigator.clipboard && scriptOutput.value) {
+            navigator.clipboard.writeText(scriptOutput.value).then(() => {
                 // Visual feedback
                 const originalText = copyBtn.innerText;
                 copyBtn.innerText = '복사 완료!';

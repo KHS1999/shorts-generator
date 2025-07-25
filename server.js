@@ -189,22 +189,22 @@ app.post('/generate', authenticateToken, async (req, res) => {
                 console.error('Error updating generation count:', err.message);
             }
             // Move AI generation logic here
-            await generateScriptAndRespond(req, res, topic, tone);
+            await generateScriptAndRespond(req, res, topic, tone, user.is_premium); // Pass is_premium here
         });
     });
 });
 
-async function generateScriptAndRespond(req, res, topic, tone) {
+async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus) { // Add isPremiumStatus to signature
     try {
         const { keyword, scriptLength } = req.body; // Get keyword and scriptLength from request body
 
         // Check if user is premium to use keyword feature
-        if (keyword && req.user.is_premium !== 1) {
+        if (keyword && isPremiumStatus !== 1) { // Use isPremiumStatus here
             return res.status(403).json({ error: '키워드 포함 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
         }
 
         // Check if user is premium to use longer script feature
-        if (scriptLength > 1 && req.user.is_premium !== 1) {
+        if (scriptLength > 1 && isPremiumStatus !== 1) { // Use isPremiumStatus here
             return res.status(403).json({ error: '긴 대본 생성 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
         }
         // No need to check topic here again as it's checked above

@@ -145,7 +145,7 @@ app.get('/user-info', authenticateToken, (req, res) => {
 
 // API endpoint to generate the script
 app.post('/generate', authenticateToken, async (req, res) => {
-    const { topic, tone, scriptLength, keyword, platform, numVariations } = req.body; // Define all parameters here
+    const { topic, tone, scriptLength, keyword, platform, numVariations, targetAudience } = req.body; // Define all parameters here
 
     if (!topic) {
         return res.status(400).json({ error: 'Topic is required' });
@@ -188,11 +188,11 @@ app.post('/generate', authenticateToken, async (req, res) => {
         }
 
         // Call generateScriptAndRespond with all necessary parameters
-        await generateScriptAndRespond(req, res, topic, tone, isPremium, scriptLength, keyword, platform, numVariations); 
+        await generateScriptAndRespond(req, res, topic, tone, isPremium, scriptLength, keyword, platform, numVariations, targetAudience); 
     });
 });
 
-async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength, keyword, platform, numVariations) { 
+async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength, keyword, platform, numVariations, targetAudience) { 
     try {
         const parsedScriptLength = parseInt(scriptLength, 10); // Ensure scriptLength is an integer
         const parsedNumVariations = parseInt(numVariations, 10); // Ensure numVariations is an integer
@@ -210,6 +210,11 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         // Check if user is premium to generate multiple variations
         if (parsedNumVariations > 1 && isPremiumStatus !== 1) {
             return res.status(403).json({ error: '여러 대본 변형 생성 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
+        }
+
+        // Check if user is premium to use target audience feature
+        if (targetAudience !== 'general' && isPremiumStatus !== 1) {
+            return res.status(403).json({ error: '타겟 시청자 설정 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
         }
 
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -241,6 +246,7 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         ${lengthInstruction}
         The script should have a **${tone}** tone.
         ${platformInstruction}
+        The target audience for this script is **${targetAudience}**.
 
         ${keyword ? `
         **Important:** The script MUST include the following keyword(s): "${keyword}".

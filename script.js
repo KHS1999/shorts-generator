@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const keywordInput = document.getElementById('keyword-input');
     const scriptLengthSelect = document.getElementById('script-length-select');
     const platformSelect = document.getElementById('platform-select');
-    const numVariationsSelect = document.getElementById('num-variations-select'); // New num variations select
+    const numVariationsSelect = document.getElementById('num-variations-select');
+    const targetAudienceSelect = document.getElementById('target-audience-select'); // New target audience select
     const toneSelect = document.getElementById('tone-select');
     const scriptOutput = document.getElementById('script-output');
     const resultContainer = document.getElementById('result-container');
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         keywordInput.placeholder = "포함할 키워드 (선택 사항)";
                         scriptLengthSelect.disabled = false; // Enable script length select for premium users
                         numVariationsSelect.disabled = false; // Enable num variations select for premium users
+                        targetAudienceSelect.disabled = false; // Enable target audience select for premium users
                     } else {
                         upgradeBtn.style.display = 'inline-block';
                         keywordInput.disabled = true; // Disable keyword input for free users
@@ -54,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         scriptLengthSelect.value = "1"; // Reset to 1 minute for free users
                         numVariationsSelect.disabled = true; // Disable num variations select for free users
                         numVariationsSelect.value = "1"; // Reset to 1 variation for free users
+                        targetAudienceSelect.disabled = true; // Disable target audience select for free users
+                        targetAudienceSelect.value = "general"; // Reset to general for free users
                     }
                 } else {
                     console.error('Failed to fetch user info:', data.error);
@@ -167,7 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const keyword = keywordInput.value;
         const scriptLength = scriptLengthSelect.value;
         const platform = platformSelect.value;
-        const numVariations = numVariationsSelect.value; // Get num variations value
+        const numVariations = numVariationsSelect.value;
+        const targetAudience = targetAudienceSelect.value; // Get target audience value
 
         if (!topic) {
             alert('주제를 입력해주세요!');
@@ -185,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${userToken}` // Add token to header
             },
-            body: JSON.stringify({ topic, tone, keyword, scriptLength, platform, numVariations }),
+            body: JSON.stringify({ topic, tone, keyword, scriptLength, platform, numVariations, targetAudience }),
         })
         .then(response => response.json())
         .then(data => {

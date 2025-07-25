@@ -187,13 +187,13 @@ app.post('/generate', authenticateToken, async (req, res) => {
         }
 
         // Always call generateScriptAndRespond after checks
-        await generateScriptAndRespond(req, res, topic, tone, isPremium); // Pass isPremium here
+        await generateScriptAndRespond(req, res, topic, tone, isPremium, scriptLength); // Pass scriptLength here
     });
 });
 
-async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus) { // Add isPremiumStatus to signature
+async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength) { // Add scriptLength to signature
     try {
-        const { keyword, scriptLength } = req.body; // Get keyword and scriptLength from request body
+        const { keyword } = req.body; // Get keyword from request body
 
         // Check if user is premium to use keyword feature
         if (keyword && isPremiumStatus !== 1) { // Use isPremiumStatus here

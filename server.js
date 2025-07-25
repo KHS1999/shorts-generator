@@ -259,13 +259,11 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         - Use clear line breaks and bullet points where appropriate for readability.
         - For each scene, describe the **VISUAL** (what we see on screen, including text overlays) and the **AUDIO** (narration, sound effects, BGM suggestions). Clearly separate these two elements for each scene.
         - The narration should be conversational and energetic.
-        - Avoid unnecessary introductory or concluding remarks outside the main script structure.
 
         Now, write the script in **Korean**.
         ${parsedNumVariations > 1 ? `
-        **Important:** If generating multiple variations, separate each complete script with the exact string: `---SCRIPT_SEPARATOR---`
+        **Important:** If generating multiple variations, separate each complete script with the exact string: ---SCRIPT_SEPARATOR---
         ` : ''}
-        `;
         `;
 
         let finalScripts = [];

@@ -194,6 +194,7 @@ app.post('/generate', authenticateToken, async (req, res) => {
 async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength) { // Add scriptLength to signature
     try {
         const { keyword } = req.body; // Get keyword from request body
+        const parsedScriptLength = parseInt(scriptLength, 10); // Ensure scriptLength is an integer
 
         // Check if user is premium to use keyword feature
         if (keyword && isPremiumStatus !== 1) { // Use isPremiumStatus here
@@ -201,19 +202,21 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         }
 
         // Check if user is premium to use longer script feature
-        if (scriptLength > 1 && isPremiumStatus !== 1) { // Use isPremiumStatus here
+        if (parsedScriptLength > 1 && isPremiumStatus !== 1) { // Use parsedScriptLength here
             return res.status(403).json({ error: '긴 대본 생성 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
         }
-        // No need to check topic here again as it's checked above
-        // if (!topic) {
-        //     return res.status(400).json({ error: 'Topic is required' });
-        // }
 
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
+        let lengthInstruction = `Your goal is to write a script for a ${parsedScriptLength}-minute video about the topic: **"${topic}"**.`;
+        if (parsedScriptLength > 1) {
+            lengthInstruction += `
+        **Crucial:** Ensure the script is detailed and expansive enough to genuinely fill ${parsedScriptLength} minutes. This means including more scenes, more detailed descriptions, and elaborating on points. Do NOT just write a 1-minute script and repeat it.`;
+        }
+
         const prompt = `
         You are a world-class scriptwriter for viral YouTube Shorts, known for creating addictive and highly engaging content.
-        Your goal is to write a script for a ${scriptLength}-minute video about the topic: **"${topic}"**.
+        ${lengthInstruction}
         The script should have a **${tone}** tone.
 
         ${keyword ? `

@@ -167,7 +167,7 @@ app.post('/generate', authenticateToken, async (req, res) => {
 
         // If user is premium, skip limit check
         if (isPremium) {
-            await generateScriptAndRespond(req, res, topic, tone);
+            await generateScriptAndRespond(req, res, topic, tone, isPremium); // Pass isPremium here
             return;
         }
 

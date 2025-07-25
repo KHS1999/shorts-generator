@@ -191,9 +191,9 @@ app.post('/generate', authenticateToken, async (req, res) => {
     });
 });
 
-async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength) { // Add scriptLength to signature
+async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength) {
     try {
-        const { keyword } = req.body; // Get keyword from request body
+        const { keyword, platform } = req.body; // Get keyword and platform from request body
         const parsedScriptLength = parseInt(scriptLength, 10); // Ensure scriptLength is an integer
 
         // Check if user is premium to use keyword feature
@@ -218,6 +218,7 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         You are a world-class scriptwriter for viral YouTube Shorts, known for creating addictive and highly engaging content.
         ${lengthInstruction}
         The script should have a **${tone}** tone.
+        It should be optimized for **${platform}**.
 
         ${keyword ? `
         **Important:** The script MUST include the following keyword(s): "${keyword}".

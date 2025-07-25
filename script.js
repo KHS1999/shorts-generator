@@ -2,7 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateBtn = document.getElementById('generate-btn');
     const topicInput = document.getElementById('topic-input');
     const keywordInput = document.getElementById('keyword-input');
-    const scriptLengthSelect = document.getElementById('script-length-select'); // New script length select
+    const scriptLengthSelect = document.getElementById('script-length-select');
+    const platformSelect = document.getElementById('platform-select'); // New platform select
     const toneSelect = document.getElementById('tone-select');
     const scriptOutput = document.getElementById('script-output');
     const resultContainer = document.getElementById('result-container');
@@ -160,7 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const topic = topicInput.value;
         const tone = toneSelect.value;
         const keyword = keywordInput.value;
-        const scriptLength = scriptLengthSelect.value; // Get script length value // Get keyword value
+        const scriptLength = scriptLengthSelect.value;
+        const platform = platformSelect.value; // Get platform value // Get script length value // Get keyword value
 
         if (!topic) {
             alert('주제를 입력해주세요!');
@@ -178,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${userToken}` // Add token to header
             },
-            body: JSON.stringify({ topic, tone, keyword, scriptLength }),
+            body: JSON.stringify({ topic, tone, keyword, scriptLength, platform }),
         })
         .then(response => response.json())
         .then(data => {

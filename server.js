@@ -262,7 +262,8 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
 
         Now, write the script in **Korean**.
         ${parsedNumVariations > 1 ? `
-        **Important:** If generating multiple variations, separate each complete script with the exact string: `---SCRIPT_SEPARATOR---`
+        **Important:** If generating multiple variations, separate each complete script with the exact string: 
+---SCRIPT_SEPARATOR---
         ` : ''}
         `;
 

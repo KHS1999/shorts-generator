@@ -194,12 +194,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // Display multiple scripts
             let allScriptsHtml = '';
+            let scriptsToDisplay = [];
+
             if (Array.isArray(data.script)) {
-                data.script.forEach((script, index) => {
-                    allScriptsHtml += `<h3>대본 #${index + 1}</h3><textarea class="generated-script-textarea">${script}</textarea><button class="copy-single-script-btn" data-script="${script}">이 대본 복사</button><hr>`;
-                });
+                // If server already sent an array (e.g., for multiple variations)
+                scriptsToDisplay = data.script;
+            } else if (typeof data.script === 'string' && data.script.includes('---SCRIPT_SEPARATOR---')) {
+                // If server sent a single string with separators
+                scriptsToDisplay = data.script.split('---SCRIPT_SEPARATOR---').map(s => s.trim()).filter(s => s.length > 0);
             } else {
-                allScriptsHtml = `<textarea class="generated-script-textarea">${data.script}</textarea>`;
+                // Single script case
+                scriptsToDisplay = [data.script];
+            }
+
+            if (scriptsToDisplay.length === 0) {
+                allScriptsHtml = '<p>생성된 대본이 없습니다. 다시 시도해주세요.</p>';
+            } else {
+                scriptsToDisplay.forEach((script, index) => {
+                    allScriptsHtml += `
+                        <div class="script-variation">
+                            <h3>대본 #${index + 1}</h3>
+                            <textarea class="generated-script-textarea">${script}</textarea>
+                            <button class="copy-single-script-btn" data-script="${script}">이 대본 복사</button>
+                        </div>
+                    `;
+                });
             }
             scriptOutput.innerHTML = allScriptsHtml;
 

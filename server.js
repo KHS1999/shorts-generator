@@ -254,11 +254,15 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         4.  **Outro:** End with a strong call to action (e.g., "Comment your thoughts below!", "Follow for more secrets like this!") and a memorable closing shot.
 
         **Output Format:**
-        - Divide the script into scenes: '[SCENE 1]', '[SCENE 2]', etc.
+        - Each script should be clearly structured with headings for Hook, Build-Up, Climax/Payoff, and Outro.
+        - Use clear line breaks and bullet points where appropriate for readability.
         - For each scene, describe the **VISUAL** (what we see on screen, including text overlays) and the **AUDIO** (narration, sound effects, BGM suggestions).
         - The narration should be conversational and energetic.
 
         Now, write the script in **Korean**.
+        ${parsedNumVariations > 1 ? `
+        **Important:** If generating multiple variations, separate each complete script with the exact string: `---SCRIPT_SEPARATOR---`
+        ` : ''}
         `;
 
         let finalScripts = [];

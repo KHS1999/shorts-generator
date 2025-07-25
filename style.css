@@ -281,6 +281,51 @@ p {
     resize: vertical; /* Allow vertical resizing */
 }
 
+.script-variation {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.script-variation h3 {
+    margin-top: 0;
+    color: #555;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.script-variation textarea {
+    width: calc(100% - 20px);
+    min-height: 150px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 15px;
+    font-size: 1.1em; /* Increased font size */
+    line-height: 1.8; /* Increased line height for better spacing */
+    resize: vertical;
+    margin-bottom: 10px;
+    font-family: 'Noto Sans KR', sans-serif; /* Ensure consistent font */
+}
+
+.script-variation .copy-single-script-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    font-size: 0.8em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.script-variation .copy-single-script-btn:hover {
+    background-color: #218838;
+}
+
 /* Modal Styles */
 .modal {
     display: none; /* Hidden by default */

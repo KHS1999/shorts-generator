@@ -46,6 +46,11 @@ app.use(express.json());
 // Serve static files from the 'public' directory (or root for simplicity)
 app.use(express.static('.'));
 
+// Serve admin.html
+app.get('/admin', (req, res) => {
+    res.sendFile(__dirname + '/admin.html');
+});
+
 // Initialize the Google Generative AI client
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 

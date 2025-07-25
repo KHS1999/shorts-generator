@@ -145,7 +145,7 @@ app.get('/user-info', authenticateToken, (req, res) => {
 
 // API endpoint to generate the script
 app.post('/generate', authenticateToken, async (req, res) => {
-    const { topic, tone, scriptLength, keyword, platform } = req.body; // Define all parameters here
+    const { topic, tone, scriptLength, keyword, platform, numVariations } = req.body; // Define all parameters here
 
     if (!topic) {
         return res.status(400).json({ error: 'Topic is required' });
@@ -188,13 +188,14 @@ app.post('/generate', authenticateToken, async (req, res) => {
         }
 
         // Call generateScriptAndRespond with all necessary parameters
-        await generateScriptAndRespond(req, res, topic, tone, isPremium, scriptLength, keyword, platform); 
+        await generateScriptAndRespond(req, res, topic, tone, isPremium, scriptLength, keyword, platform, numVariations); 
     });
 });
 
-async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength, keyword, platform) { 
+async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength, keyword, platform, numVariations) { 
     try {
         const parsedScriptLength = parseInt(scriptLength, 10); // Ensure scriptLength is an integer
+        const parsedNumVariations = parseInt(numVariations, 10); // Ensure numVariations is an integer
 
         // Check if user is premium to use keyword feature
         if (keyword && isPremiumStatus !== 1) { 
@@ -206,6 +207,11 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
             return res.status(403).json({ error: '긴 대본 생성 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
         }
 
+        // Check if user is premium to generate multiple variations
+        if (parsedNumVariations > 1 && isPremiumStatus !== 1) {
+            return res.status(403).json({ error: '여러 대본 변형 생성 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
+        }
+
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         let lengthInstruction = `Your goal is to write a script for a ${parsedScriptLength}-minute video about the topic: **"${topic}"**.`;
@@ -214,11 +220,27 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         **Crucial:** Ensure the script is detailed and expansive enough to genuinely fill ${parsedScriptLength} minutes. This means including more scenes, more detailed descriptions, and elaborating on points. Do NOT just write a 1-minute script and repeat it.`;
         }
 
-        const prompt = `
-        You are a world-class scriptwriter for viral YouTube Shorts, known for creating addictive and highly engaging content.
+        let platformInstruction = '';
+        switch (platform) {
+            case 'youtube_shorts':
+                platformInstruction = `
+        Optimize for YouTube Shorts: Focus on quick hooks, clear calls to action, and highly engaging visuals. Keep sentences concise.`;
+                break;
+            case 'tiktok':
+                platformInstruction = `
+        Optimize for TikTok: Emphasize trending sounds, rapid cuts, and a strong, attention-grabbing opening. Use short, punchy phrases.`;
+                break;
+            case 'instagram_reels':
+                platformInstruction = `
+        Optimize for Instagram Reels: Prioritize visually appealing scenes, trending music, and a clear, concise message. Encourage interaction through visuals.`;
+                break;
+        }
+
+        const basePrompt = `
+        You are a world-class scriptwriter for viral short-form video content. Your goal is to write a script.
         ${lengthInstruction}
         The script should have a **${tone}** tone.
-        It should be optimized for **${platform}**.
+        ${platformInstruction}
 
         ${keyword ? `
         **Important:** The script MUST include the following keyword(s): "${keyword}".
@@ -227,9 +249,9 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
 
         **Instructions:**
         1.  **Hook (First 3 seconds):** Start with a provocative question, a surprising statement, or a visually arresting scene description that immediately grabs the viewer's attention.
-        2.  **Build-Up (Next 20 seconds):** Introduce the core topic. Build tension or curiosity. Use simple language and quick cuts.
-        3.  **Climax/Payoff (Next 20 seconds):** Reveal the most interesting fact, the solution to the problem, or the main point of the video. This should be the "Aha!" moment.
-        4.  **Outro (Last 7 seconds):** End with a strong call to action (e.g., "Comment your thoughts below!", "Follow for more secrets like this!") and a memorable closing shot.
+        2.  **Build-Up:** Introduce the core topic. Build tension or curiosity. Use simple language and quick cuts.
+        3.  **Climax/Payoff:** Reveal the most interesting fact, the solution to the problem, or the main point of the video. This should be the "Aha!" moment.
+        4.  **Outro:** End with a strong call to action (e.g., "Comment your thoughts below!", "Follow for more secrets like this!") and a memorable closing shot.
 
         **Output Format:**
         - Divide the script into scenes: '[SCENE 1]', '[SCENE 2]', etc.
@@ -239,11 +261,14 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         Now, write the script in **Korean**.
         `;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const script = await response.text();
+        let finalScripts = [];
+        for (let i = 0; i < parsedNumVariations; i++) {
+            const result = await model.generateContent(basePrompt);
+            const response = await result.response;
+            finalScripts.push(response.text());
+        }
 
-        res.json({ script });
+        res.json({ script: parsedNumVariations > 1 ? finalScripts : finalScripts[0] });
 
     } catch (error) {
         console.error('Error generating script:', error);

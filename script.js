@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const topicInput = document.getElementById('topic-input');
     const keywordInput = document.getElementById('keyword-input');
     const scriptLengthSelect = document.getElementById('script-length-select');
-    const platformSelect = document.getElementById('platform-select'); // New platform select
+    const platformSelect = document.getElementById('platform-select');
+    const numVariationsSelect = document.getElementById('num-variations-select'); // New num variations select
     const toneSelect = document.getElementById('tone-select');
     const scriptOutput = document.getElementById('script-output');
     const resultContainer = document.getElementById('result-container');
@@ -44,12 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         keywordInput.disabled = false; // Enable keyword input for premium users
                         keywordInput.placeholder = "포함할 키워드 (선택 사항)";
                         scriptLengthSelect.disabled = false; // Enable script length select for premium users
+                        numVariationsSelect.disabled = false; // Enable num variations select for premium users
                     } else {
                         upgradeBtn.style.display = 'inline-block';
                         keywordInput.disabled = true; // Disable keyword input for free users
                         keywordInput.placeholder = "프리미엄: 포함할 키워드 (선택 사항)";
                         scriptLengthSelect.disabled = true; // Disable script length select for free users
                         scriptLengthSelect.value = "1"; // Reset to 1 minute for free users
+                        numVariationsSelect.disabled = true; // Disable num variations select for free users
+                        numVariationsSelect.value = "1"; // Reset to 1 variation for free users
                     }
                 } else {
                     console.error('Failed to fetch user info:', data.error);
@@ -162,7 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const tone = toneSelect.value;
         const keyword = keywordInput.value;
         const scriptLength = scriptLengthSelect.value;
-        const platform = platformSelect.value; // Get platform value // Get script length value // Get keyword value
+        const platform = platformSelect.value;
+        const numVariations = numVariationsSelect.value; // Get num variations value
 
         if (!topic) {
             alert('주제를 입력해주세요!');
@@ -180,14 +185,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${userToken}` // Add token to header
             },
-            body: JSON.stringify({ topic, tone, keyword, scriptLength, platform }),
+            body: JSON.stringify({ topic, tone, keyword, scriptLength, platform, numVariations }),
         })
         .then(response => response.json())
         .then(data => {
             if (data.error) {
                 throw new Error(data.error);
             }
-            scriptOutput.value = data.script; // Assign to .value for textarea
+            // Display multiple scripts
+            let allScriptsHtml = '';
+            if (Array.isArray(data.script)) {
+                data.script.forEach((script, index) => {
+                    allScriptsHtml += `<h3>대본 #${index + 1}</h3><textarea class="generated-script-textarea">${script}</textarea><button class="copy-single-script-btn" data-script="${script}">이 대본 복사</button><hr>`;
+                });
+            } else {
+                allScriptsHtml = `<textarea class="generated-script-textarea">${data.script}</textarea>`;
+            }
+            scriptOutput.innerHTML = allScriptsHtml;
+
+            // Add event listeners for new copy buttons
+            document.querySelectorAll('.copy-single-script-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const scriptToCopy = event.target.dataset.script;
+                    if (navigator.clipboard && scriptToCopy) {
+                        navigator.clipboard.writeText(scriptToCopy).then(() => {
+                            const originalText = event.target.innerText;
+                            event.target.innerText = '복사 완료!';
+                            setTimeout(() => {
+                                event.target.innerText = originalText;
+                            }, 2000);
+                        }).catch(err => {
+                            console.error('Copy failed', err);
+                        });
+                    }
+                });
+            });
+
         })
         .catch(error => {
             console.error('Error:', error);
@@ -195,12 +228,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Main copy button now copies all scripts
     copyBtn.addEventListener('click', () => {
-        if (navigator.clipboard && scriptOutput.value) {
-            navigator.clipboard.writeText(scriptOutput.value).then(() => {
+        let allTextareas = document.querySelectorAll('.generated-script-textarea');
+        let fullScript = '';
+        allTextareas.forEach(textarea => {
+            fullScript += textarea.value + '\n\n---\n\n';
+        });
+
+        if (navigator.clipboard && fullScript) {
+            navigator.clipboard.writeText(fullScript).then(() => {
                 // Visual feedback
                 const originalText = copyBtn.innerText;
-                copyBtn.innerText = '복사 완료!';
+                copyBtn.innerText = '모두 복사 완료!';
                 setTimeout(() => {
                     copyBtn.innerText = originalText;
                 }, 2000);

@@ -145,7 +145,7 @@ app.get('/user-info', authenticateToken, (req, res) => {
 
 // API endpoint to generate the script
 app.post('/generate', authenticateToken, async (req, res) => {
-    const { topic, tone } = req.body; // Define topic and tone here
+    const { topic, tone, scriptLength } = req.body; // Define topic, tone, and scriptLength here
     if (!topic) {
         return res.status(400).json({ error: 'Topic is required' });
     }

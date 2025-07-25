@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const generateBtn = document.getElementById('generate-btn');
     const topicInput = document.getElementById('topic-input');
-    const keywordInput = document.getElementById('keyword-input'); // New keyword input
+    const keywordInput = document.getElementById('keyword-input');
+    const scriptLengthSelect = document.getElementById('script-length-select'); // New script length select
     const toneSelect = document.getElementById('tone-select');
     const scriptOutput = document.getElementById('script-output');
     const resultContainer = document.getElementById('result-container');
@@ -41,10 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         upgradeBtn.style.display = 'none';
                         keywordInput.disabled = false; // Enable keyword input for premium users
                         keywordInput.placeholder = "포함할 키워드 (선택 사항)";
+                        scriptLengthSelect.disabled = false; // Enable script length select for premium users
                     } else {
                         upgradeBtn.style.display = 'inline-block';
                         keywordInput.disabled = true; // Disable keyword input for free users
                         keywordInput.placeholder = "프리미엄: 포함할 키워드 (선택 사항)";
+                        scriptLengthSelect.disabled = true; // Disable script length select for free users
+                        scriptLengthSelect.value = "1"; // Reset to 1 minute for free users
                     }
                 } else {
                     console.error('Failed to fetch user info:', data.error);
@@ -155,7 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
     generateBtn.addEventListener('click', () => {
         const topic = topicInput.value;
         const tone = toneSelect.value;
-        const keyword = keywordInput.value; // Get keyword value
+        const keyword = keywordInput.value;
+        const scriptLength = scriptLengthSelect.value; // Get script length value // Get keyword value
 
         if (!topic) {
             alert('주제를 입력해주세요!');
@@ -173,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${userToken}` // Add token to header
             },
-            body: JSON.stringify({ topic, tone, keyword }),
+            body: JSON.stringify({ topic, tone, keyword, scriptLength }),
         })
         .then(response => response.json())
         .then(data => {

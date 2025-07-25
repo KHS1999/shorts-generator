@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     allScriptsHtml += `
                         <div class="script-variation">
                             <h3>대본 #${index + 1}</h3>
-                            <textarea class="generated-script-textarea">${script}</textarea>
+                            <div class="generated-script-content">${script}</div>
                             <button class="copy-single-script-btn" data-script="${script}">이 대본 복사</button>
                         </div>
                     `;
@@ -248,20 +248,19 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(error => {
             console.error('Error:', error);
-            scriptOutput.value = `대본 생성에 실패했습니다. 오류: ${error.message}`;
+            scriptOutput.innerHTML = `대본 생성에 실패했습니다. 오류: ${error.message}`;
         });
     });
 
     // Main copy button now copies all scripts
     copyBtn.addEventListener('click', () => {
-        let allTextareas = document.querySelectorAll('.generated-script-textarea');
-        let fullScript = '';
-        allTextareas.forEach(textarea => {
-            fullScript += textarea.value + '\n\n---\n\n';
+        let allScriptsContent = '';
+        document.querySelectorAll('.generated-script-content').forEach(div => {
+            allScriptsContent += div.innerText + '\n\n---\n\n';
         });
 
-        if (navigator.clipboard && fullScript) {
-            navigator.clipboard.writeText(fullScript).then(() => {
+        if (navigator.clipboard && allScriptsContent) {
+            navigator.clipboard.writeText(allScriptsContent).then(() => {
                 // Visual feedback
                 const originalText = copyBtn.innerText;
                 copyBtn.innerText = '모두 복사 완료!';

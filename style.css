@@ -329,16 +329,42 @@ p {
 }
 
 .script-variation textarea {
-    width: calc(100% - 20px);
-    min-height: 150px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 15px;
-    font-size: 1.1em; /* Increased font size */
+    display: none; /* Hide textarea, use div for display */
+}
+
+.generated-script-content {
+    background-color: #fdfdfd;
+    border: 1px solid #eee;
+    padding: 20px;
+    border-radius: 8px;
+    white-space: pre-wrap; /* Preserve line breaks */
     line-height: 1.8; /* Increased line height for better spacing */
-    resize: vertical;
-    margin-bottom: 10px;
-    font-family: 'Noto Sans KR', sans-serif; /* Ensure consistent font */
+    color: #333;
+    font-size: 1.1em; /* Increased font size */
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.generated-script-content h2, .generated-script-content h3 {
+    color: #222;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.generated-script-content strong {
+    color: #000;
+}
+
+.generated-script-content ul {
+    list-style-type: disc;
+    margin-left: 20px;
+    padding-left: 0;
+}
+
+.generated-script-content li {
+    margin-bottom: 5px;
 }
 
 .script-variation .copy-single-script-btn {

@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Replace div with textarea for editing
                     const textarea = document.createElement('textarea');
                     textarea.className = 'generated-script-textarea';
-                    textarea.value = scriptText.replace(/<br\s*\/?>/gi, '\n'); // Convert <br> to newlines
+                    textarea.value = scriptText; // Assign plain text content
                     scriptDiv.parentNode.replaceChild(textarea, scriptDiv);
 
                     // Change edit button to save button

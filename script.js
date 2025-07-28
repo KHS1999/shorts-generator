@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Show copy button again
                     saveButton.previousElementSibling.style.display = 'inline-block';
 
-                    // Optional: Update the data-script attribute for copy button
+                    // Update the data-script attribute for copy button with the edited content
                     saveButton.previousElementSibling.dataset.script = scriptHtml;
                 }
             });

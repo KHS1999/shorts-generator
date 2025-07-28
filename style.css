@@ -401,17 +401,15 @@ p {
 }
 
 .script-actions {
-    text-align: right;
+    display: flex; /* Use flexbox for button alignment */
+    gap: 10px; /* Space between buttons */
+    justify-content: flex-end; /* Align buttons to the right */
     margin-top: 15px;
-    margin-bottom: 20px; /* Add margin below buttons */
+    margin-bottom: 30px; /* Increased margin below buttons */
 }
 
 .script-actions button {
-    margin-right: 10px; /* Add margin between buttons */
-}
-
-.script-actions button:last-child {
-    margin-right: 0; /* No margin for the last button */
+    margin-right: 0; /* Remove individual button margin-right */
 }
 
 /* Modal Styles */

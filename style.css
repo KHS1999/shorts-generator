@@ -406,6 +406,14 @@ p {
     margin-bottom: 20px; /* Add margin below buttons */
 }
 
+.script-actions button {
+    margin-right: 10px; /* Add margin between buttons */
+}
+
+.script-actions button:last-child {
+    margin-right: 0; /* No margin for the last button */
+}
+
 /* Modal Styles */
 .modal {
     display: none; /* Hidden by default */

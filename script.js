@@ -221,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <h3>대본 #${index + 1}</h3>
                             <div class="generated-script-content">${script}</div>
                             <button class="copy-single-script-btn" data-script="${script}">이 대본 복사</button>
+                            <button class="edit-single-script-btn" data-index="${index}">편집</button>
                         </div>
                     `;
                 });
@@ -243,6 +244,58 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     }
                 });
+            });
+
+            // Add event listeners for edit buttons
+            document.querySelectorAll('.edit-single-script-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const index = event.target.dataset.index;
+                    const scriptDiv = event.target.previousElementSibling.previousElementSibling; // The div with the script content
+                    const scriptText = scriptDiv.innerHTML; // Get current HTML content
+
+                    // Replace div with textarea for editing
+                    const textarea = document.createElement('textarea');
+                    textarea.className = 'generated-script-textarea';
+                    textarea.value = scriptText.replace(/<br\s*\/?>/gi, '\n'); // Convert <br> to newlines
+                    scriptDiv.parentNode.replaceChild(textarea, scriptDiv);
+
+                    // Change edit button to save button
+                    event.target.innerText = '저장';
+                    event.target.classList.remove('edit-single-script-btn');
+                    event.target.classList.add('save-single-script-btn');
+
+                    // Hide copy button
+                    event.target.previousElementSibling.style.display = 'none';
+
+                    // Focus on textarea
+                    textarea.focus();
+                });
+            });
+
+            // Add event listener for save buttons (delegated as they are created dynamically)
+            scriptOutput.addEventListener('click', async (event) => {
+                if (event.target.classList.contains('save-single-script-btn')) {
+                    const saveButton = event.target;
+                    const textarea = saveButton.previousElementSibling; // The textarea with the script content
+                    const scriptHtml = textarea.value.replace(/\n/g, '<br>'); // Convert newlines to <br>
+
+                    // Replace textarea with div for display
+                    const scriptDiv = document.createElement('div');
+                    scriptDiv.className = 'generated-script-content';
+                    scriptDiv.innerHTML = scriptHtml;
+                    textarea.parentNode.replaceChild(scriptDiv, textarea);
+
+                    // Change save button back to edit button
+                    saveButton.innerText = '편집';
+                    saveButton.classList.remove('save-single-script-btn');
+                    saveButton.classList.add('edit-single-script-btn');
+
+                    // Show copy button again
+                    saveButton.previousElementSibling.style.display = 'inline-block';
+
+                    // Optional: Update the data-script attribute for copy button
+                    saveButton.previousElementSibling.dataset.script = scriptHtml;
+                }
             });
 
         })

@@ -220,8 +220,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="script-variation">
                             <h3>대본 #${index + 1}</h3>
                             <div class="generated-script-content">${script}</div>
-                            <button class="copy-single-script-btn" data-script="${script}">이 대본 복사</button>
-                            <button class="edit-single-script-btn" data-index="${index}">편집</button>
+                            <div class="script-actions">
+                                <button class="copy-single-script-btn" data-script="${script}">이 대본 복사</button>
+                                <button class="edit-single-script-btn" data-index="${index}">편집</button>
+                            </div>
                         </div>
                     `;
                 });
@@ -250,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.edit-single-script-btn').forEach(button => {
                 button.addEventListener('click', (event) => {
                     const index = event.target.dataset.index;
-                    const scriptDiv = event.target.previousElementSibling.previousElementSibling; // The div with the script content
+                    const scriptDiv = event.target.parentNode.previousElementSibling; // The div with the script content
                     const scriptText = scriptDiv.innerText; // Get current plain text content
 
                     // Replace div with textarea for editing

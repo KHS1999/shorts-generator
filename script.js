@@ -253,12 +253,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.addEventListener('click', (event) => {
                     const index = event.target.dataset.index;
                     const scriptDiv = event.target.parentNode.previousElementSibling; // The div with the script content
-                    const scriptText = scriptDiv.innerText; // Get current plain text content
+                    const scriptText = scriptDiv.innerHTML; // Get current HTML content
+                    const plainText = scriptText.replace(/<[^>]*>/g, '').replace(/<br\s*\/?>/gi, '\n'); // Remove HTML tags and convert <br> to newlines
 
                     // Replace div with textarea for editing
                     const textarea = document.createElement('textarea');
                     textarea.className = 'generated-script-textarea';
-                    textarea.value = scriptText; // Assign plain text content
+                    textarea.value = plainText; // Assign plain text content
                     scriptDiv.parentNode.replaceChild(textarea, scriptDiv);
 
                     // Change edit button to save button

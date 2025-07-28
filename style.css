@@ -403,6 +403,7 @@ p {
 .script-actions {
     text-align: right;
     margin-top: 15px;
+    margin-bottom: 20px; /* Add margin below buttons */
 }
 
 /* Modal Styles */

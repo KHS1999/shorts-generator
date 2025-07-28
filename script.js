@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.addEventListener('click', (event) => {
                     const index = event.target.dataset.index;
                     const scriptDiv = event.target.previousElementSibling.previousElementSibling; // The div with the script content
-                    const scriptText = scriptDiv.innerHTML; // Get current HTML content
+                    const scriptText = scriptDiv.innerText; // Get current plain text content
 
                     // Replace div with textarea for editing
                     const textarea = document.createElement('textarea');

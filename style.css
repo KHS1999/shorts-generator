@@ -376,28 +376,10 @@ p {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
-    margin-right: 10px; /* Add margin to separate from edit button */
 }
 
 .script-variation .copy-single-script-btn:hover {
     background-color: #218838;
-}
-
-.edit-single-script-btn,
-.save-single-script-btn {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    font-size: 0.8em;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.edit-single-script-btn:hover,
-.save-single-script-btn:hover {
-    background-color: #0056b3;
 }
 
 .script-actions {
@@ -406,10 +388,6 @@ p {
     justify-content: flex-end; /* Align buttons to the right */
     margin-top: 15px;
     margin-bottom: 30px; /* Increased margin below buttons */
-}
-
-.script-actions button {
-    margin-right: 0; /* Remove individual button margin-right */
 }
 
 /* Modal Styles */

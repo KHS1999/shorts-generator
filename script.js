@@ -277,32 +277,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-        .catch(error => {
-            console.error('Error:', error);
-            scriptOutput.innerHTML = `대본 생성에 실패했습니다. 오류: ${error.message}`;
-        });
-    });
-
-    // Main copy button now copies all scripts
-    copyBtn.addEventListener('click', () => {
-        let allScriptsContent = '';
-        document.querySelectorAll('.generated-script-content').forEach(div => {
-            allScriptsContent += div.innerText + '\n\n---\n\n';
-        });
-
-        if (navigator.clipboard && allScriptsContent) {
-            navigator.clipboard.writeText(allScriptsContent).then(() => {
-                // Visual feedback
-                const originalText = copyBtn.innerText;
-                copyBtn.innerText = '모두 복사 완료!';
-                setTimeout(() => {
-                    copyBtn.innerText = originalText;
-                }, 2000);
-            }).catch(err => {
-                console.error('Copy failed', err);
-            });
-        } else {
-            alert("복사할 내용이 없거나 브라우저가 지원하지 않습니다.");
-        }
-    });
-});

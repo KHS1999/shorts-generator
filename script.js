@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <h3>대본 #${index + 1}</h3>
                             <div class="generated-script-content">${script}</div>
                             <div class="script-actions">
-                                <button class="copy-single-script-btn" data-script="${script}">이 대본 복사</button>
+                                <button class="copy-single-script-btn" data-script="${script.replace(/"/g, '&quot;')}">이 대본 복사</button>
                             </div>
                         </div>
                     `;

@@ -3,9 +3,17 @@ const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const paypal = require('paypal-rest-sdk');
 
 const app = express();
 const port = 3000;
+
+// Configure PayPal
+paypal.configure({
+    'mode': 'sandbox', // sandbox or live
+    'client_id': process.env.PAYPAL_CLIENT_ID,
+    'client_secret': process.env.PAYPAL_CLIENT_SECRET
+});
 
 // Middleware to verify JWT token
 const authenticateToken = (req, res, next) => {
@@ -105,6 +113,89 @@ app.post('/login', (req, res) => {
     });
 });
 
+// PayPal Payment Creation
+app.post('/create-payment', authenticateToken, (req, res) => {
+    const create_payment_json = {
+        "intent": "sale",
+        "payer": {
+            "payment_method": "paypal"
+        },
+        "redirect_urls": {
+            "return_url": `http://localhost:${port}/success?userId=${req.user.id}`,
+            "cancel_url": `http://localhost:${port}/cancel`
+        },
+        "transactions": [{
+            "item_list": {
+                "items": [{
+                    "name": "Premium Membership",
+                    "sku": "001",
+                    "price": "9.99",
+                    "currency": "USD",
+                    "quantity": 1
+                }]
+            },
+            "amount": {
+                "currency": "USD",
+                "total": "9.99"
+            },
+            "description": "Unlock premium features for the AI Shorts Generator."
+        }]
+    };
+
+    paypal.payment.create(create_payment_json, function (error, payment) {
+        if (error) {
+            console.error("PayPal Create Payment Error:", error.response);
+            res.status(500).json({ error: "Failed to create PayPal payment." });
+        } else {
+            for(let i = 0; i < payment.links.length; i++){
+                if(payment.links[i].rel === 'approval_url'){
+                    res.json({ approval_url: payment.links[i].href });
+                }
+            }
+        }
+    });
+});
+
+// PayPal Payment Success
+app.get('/success', (req, res) => {
+    const payerId = req.query.PayerID;
+    const paymentId = req.query.paymentId;
+    const userId = req.query.userId;
+
+    const execute_payment_json = {
+        "payer_id": payerId,
+        "transactions": [{
+            "amount": {
+                "currency": "USD",
+                "total": "9.99"
+            }
+        }]
+    };
+
+    paypal.payment.execute(paymentId, execute_payment_json, function (error, payment) {
+        if (error) {
+            console.error("PayPal Execute Payment Error:", error.response);
+            res.status(500).send("Payment failed.");
+        } else {
+            // Update user to premium in the database
+            db.run('UPDATE users SET is_premium = 1 WHERE id = ?', [userId], function(err) {
+                if (err) {
+                    console.error('Error updating user to premium:', err.message);
+                    return res.status(500).send("Payment succeeded, but failed to update your account. Please contact support.");
+                }
+                console.log(`User with ID ${userId} has been upgraded to premium.`);
+                res.send('Success! Your account has been upgraded to premium. You can now close this window and refresh the main page.');
+            });
+        }
+    });
+});
+
+// PayPal Payment Cancel
+app.get('/cancel', (req, res) => {
+    res.send('Payment cancelled. You can close this window.');
+});
+
+
 // Admin endpoint to update user premium status
 app.post('/admin/update-premium', (req, res) => {
     const { adminSecret, email, isPremium } = req.body;
@@ -192,7 +283,56 @@ app.post('/generate', authenticateToken, async (req, res) => {
     });
 });
 
-async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength, keyword, platform, numVariations, targetAudience) { 
+// API endpoint to regenerate the script based on user edits
+app.post('/regenerate', authenticateToken, async (req, res) => {
+    const { topic, tone, scriptLength, keyword, platform, numVariations, targetAudience, editedScript } = req.body;
+
+    if (!editedScript) {
+        return res.status(400).json({ error: 'Edited script content is required for regeneration.' });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    db.get('SELECT daily_generations, last_generation_date, is_premium FROM users WHERE id = ?', [req.user.id], async (err, user) => {
+        if (err) {
+            console.error('Error fetching user generation count for regeneration:', err.message);
+            return res.status(500).json({ error: 'Failed to check generation count for regeneration' });
+        }
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        let currentGenerations = user.daily_generations;
+        let lastDate = user.last_generation_date;
+        const isPremium = user.is_premium;
+
+        // Reset count if it's a new day
+        if (lastDate !== today) {
+            currentGenerations = 0;
+            lastDate = today;
+        }
+
+        const FREE_LIMIT = 5; // Free users can generate 5 scripts per day
+
+        if (!isPremium && currentGenerations >= FREE_LIMIT) {
+            return res.status(403).json({ error: `일일 생성 제한(${FREE_LIMIT}회)을 초과했습니다. 프리미엄으로 업그레이드하세요!` });
+        }
+
+        // Increment generation count only for free users
+        if (!isPremium) {
+            db.run('UPDATE users SET daily_generations = ?, last_generation_date = ? WHERE id = ?', [currentGenerations + 1, today, req.user.id], (err) => {
+                if (err) {
+                    console.error('Error updating generation count:', err.message);
+                }
+            });
+        }
+
+        // Call generateScriptAndRespond with all necessary parameters, including the edited script
+        await generateScriptAndRespond(req, res, topic, tone, isPremium, scriptLength, keyword, platform, numVariations, targetAudience, editedScript);
+    });
+});
+
+async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, scriptLength, keyword, platform, numVariations, targetAudience, editedScript = null) { 
     try {
         const parsedScriptLength = parseInt(scriptLength, 10); // Ensure scriptLength is an integer
         const parsedNumVariations = parseInt(numVariations, 10); // Ensure numVariations is an integer
@@ -237,34 +377,74 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         }
 
         const basePrompt = `
-        You are a world-class scriptwriter for viral short-form video content. Your goal is to write a script.
-        ${lengthInstruction}
-        The script should have a **${tone}** tone.
-        ${platformInstruction}
-        The target audience for this script is **${targetAudience}**.
+        **Persona:**
+        You are a visionary director and viral marketing expert, tasked with creating a concept for a short-form video that is not only engaging but also feels cinematic, premium, and highly shareable. Your final output will be a detailed script and production plan.
 
+        **Core Task:**
+        Generate a script for a ${parsedScriptLength}-minute video on the topic: **"${topic}"**.
+        The video must have a **${tone}** tone and be tailored for the **${targetAudience}** audience.
+
+        **Platform-Specific Directives:**
+        ${(() => {
+            switch (platform) {
+                case 'youtube_shorts':
+                    return `
+        **Platform:** YouTube Shorts
+        **Strategy:** Focus on a strong narrative arc, even within the short timeframe. Use high-quality visuals and a clear, compelling voiceover. The goal is retention and encouraging viewers to check out your channel. Use a cinematic BGM.
+                    `;
+                case 'tiktok':
+                    return `
+        **Platform:** TikTok
+        **Strategy:** Leverage trending audio or concepts, but give it a unique, high-quality twist. The first second is critical. Use rapid, dynamic cuts and engaging text overlays. The vibe should be energetic and authentic.
+                    `;
+                case 'instagram_reels':
+                    return `
+        **Platform:** Instagram Reels
+        **Strategy:** Aesthetics are key. Create a visually stunning video with a sophisticated feel. Use beautiful color grading and artistic shots. The audio should be elegant and complementary to the visuals. Encourage shares and saves with a valuable, beautifully presented takeaway.
+                    `;
+                default:
+                    return '';
+            }
+        })()}
+
+        **Keyword Integration:**
         ${keyword ? `
-        **Important:** The script MUST include the following keyword(s): "${keyword}".
-        Integrate it naturally and smoothly into the script.
+        **Mandatory Keyword:** The script must naturally and seamlessly incorporate the keyword: **"${keyword}"**. Do not make it feel forced.
         ` : ''}
 
-        **Instructions:**
-        1.  **Hook (First 3 seconds):** Start with a provocative question, a surprising statement, or a visually arresting scene description that immediately grabs the viewer's attention.
-        2.  **Build-Up:** Introduce the core topic. Build tension or curiosity. Use simple language and quick cuts.
-        3.  **Climax/Payoff:** Reveal the most interesting fact, the solution to the problem, or the main point of the video. This should be the "Aha!" moment.
-        4.  **Outro:** End with a strong call to action (e.g., "Comment your thoughts below!", "Follow for more secrets like this!") and a memorable closing shot.
+        **Output Structure (Strict Adherence Required):**
+        You must format the output in Korean. For each scene, provide the following details. Use Markdown for clear separation.
 
-        **Output Format:**
-        - Each script should be clearly structured with headings for Hook, Build-Up, Climax/Payoff, and Outro. Use bold for headings.
-        - Use clear line breaks and bullet points where appropriate for readability.
-        - For each scene, describe the **VISUAL** (what we see on screen, including text overlays) and the **AUDIO** (narration, sound effects, BGM suggestions). Clearly separate these two elements for each scene.
-        - The narration should be conversational and energetic.
+        ---
+        **[SCENE #]**
+        *   **VISUAL:** Describe the shot in detail. What is the camera angle? What is the lighting like? What text overlays appear, and what is their font and animation style? Be specific and evocative. (e.g., *Cinematic close-up shot of a single drop of rain falling in slow motion...*)
+        *   **AUDIO - NARRATION:** Write the narrator's script. The language should be polished and professional, matching the specified tone.
+        *   **AUDIO - SFX:** Suggest specific sound effects to enhance the scene. (e.g., *Gentle rain sounds, a soft whoosh as text appears.*)
+        *   **AUDIO - MUSIC:** Recommend a style or specific track of background music that fits the mood. (e.g., *Lo-fi chill-hop with a melancholic melody.*)
+        ---
 
-        Now, write the script in **Korean**.
+        **Length & Variations:**
+        ${lengthInstruction}
         ${parsedNumVariations > 1 ? `
-        **Important:** If generating multiple variations, separate each complete script with the exact string: ---SCRIPT_SEPARATOR---
+        **Multiple Variations:** Generate ${parsedNumVariations} distinct versions of this script concept. Each version should offer a unique angle or creative approach to the topic. Separate each complete script with the exact string: ---SCRIPT_SEPARATOR---
         ` : ''}
+
+        Now, begin the creative process.
         `;
+
+        if (editedScript) {
+            basePrompt += `
+        **Refinement Task:**
+        You are provided with an existing script below. Your task is to refine and regenerate it based on the original parameters (topic, tone, length, platform, audience, keyword) and the content of the provided script. Focus on improving its quality, flow, and adherence to the specified tone and platform directives. Do NOT simply repeat the provided script; enhance it.
+
+        **Provided Script for Reference/Refinement:**
+        ```
+        ${editedScript}
+        ```
+
+        Generate the refined script now.
+        `;
+        }
 
         let finalScripts = [];
         for (let i = 0; i < parsedNumVariations; i++) {

@@ -10,6 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const scriptOutput = document.getElementById('script-output');
     const resultContainer = document.getElementById('result-container');
     const copyBtn = document.getElementById('copy-btn');
+    const editedScriptInput = document.getElementById('edited-script-input');
+    const regenerateBtn = document.getElementById('regenerate-btn');
+    const editSection = document.getElementById('edit-section');
+    const regenerateSameBtn = document.getElementById('regenerate-same-btn');
 
     // Auth elements
     const authModal = document.getElementById('auth-modal');
@@ -158,11 +162,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Upgrade button click
-    upgradeBtn.addEventListener('click', () => {
-        // Replace this with your actual PayPal.me link or other payment link
-        const paymentLink = "https://paypal.me/yourusername/9.99"; // Example: PayPal.me link for $9.99
-        window.open(paymentLink, '_blank'); // Open in new tab
-        alert("결제 완료 후, 이메일(your_email@example.com)로 결제 완료 사실과 회원가입 이메일을 보내주시면 프리미엄으로 전환해 드립니다.");
+    upgradeBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/create-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                // Redirect user to PayPal for payment
+                window.location.href = data.approval_url;
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Upgrade Error:', error);
+            alert('An error occurred while trying to upgrade. Please try again.');
+        }
     });
 
     generateBtn.addEventListener('click', () => {
@@ -226,6 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                 });
+                // Set the first script to the editable textarea
+                editedScriptInput.value = scriptsToDisplay[0];
+                editSection.style.display = 'block'; // Show the edit section
             }
             scriptOutput.innerHTML = allScriptsHtml;
 
@@ -240,6 +262,101 @@ document.addEventListener('DOMContentLoaded', () => {
                             setTimeout(() => {
                                 event.target.innerText = originalText;
                             }, 2000);
+                            editedScriptInput.value = scriptToCopy; // Also copy to the edit textarea
+                        }).catch(err => {
+                            console.error('Copy failed', err);
+                        });
+                    }
+                });
+            });
+
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            scriptOutput.innerHTML = `대본 생성에 실패했습니다. 오류: ${error.message}`;
+        });
+    });
+
+    // Regenerate Same button click
+    regenerateSameBtn.addEventListener('click', () => {
+        const topic = topicInput.value;
+        const tone = toneSelect.value;
+        const keyword = keywordInput.value;
+        const scriptLength = scriptLengthSelect.value;
+        const platform = platformSelect.value;
+        const numVariations = numVariationsSelect.value;
+        const targetAudience = targetAudienceSelect.value; // Get target audience value
+
+        if (!topic) {
+            alert('주제를 입력해주세요!');
+            return;
+        }
+
+        // Show the result container and a loading message
+        resultContainer.style.display = 'block';
+        scriptOutput.innerHTML = 'AI가 같은 조건으로 대본을 다시 생성하고 있습니다...';
+
+        // --- Real AI Script Generation ---
+        fetch('/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userToken}` // Add token to header
+            },
+            body: JSON.stringify({ topic, tone, keyword, scriptLength, platform, numVariations, targetAudience }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            // Display multiple scripts
+            let allScriptsHtml = '';
+            let scriptsToDisplay = [];
+
+            if (Array.isArray(data.script)) {
+                // If server already sent an array (e.g., for multiple variations)
+                scriptsToDisplay = data.script;
+            } else if (typeof data.script === 'string' && data.script.includes('---SCRIPT_SEPARATOR---')) {
+                // If server sent a single string with separators
+                scriptsToDisplay = data.script.split('---SCRIPT_SEPARATOR---').map(s => s.trim()).filter(s => s.length > 0);
+            } else {
+                // Single script case
+                scriptsToDisplay = [data.script];
+            }
+
+            if (scriptsToDisplay.length === 0) {
+                allScriptsHtml = '<p>생성된 대본이 없습니다. 다시 시도해주세요.</p>';
+            } else {
+                scriptsToDisplay.forEach((script, index) => {
+                    allScriptsHtml += `
+                        <div class="script-variation">
+                            <h3>대본 #${index + 1}</h3>
+                            <div class="generated-script-content">${script}</div>
+                            <div class="script-actions">
+                                <button class="copy-single-script-btn" data-script="${script.replace(/"/g, '&quot;')}">이 대본 복사</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                // Set the first script to the editable textarea
+                editedScriptInput.value = scriptsToDisplay[0];
+                editSection.style.display = 'block'; // Show the edit section
+            }
+            scriptOutput.innerHTML = allScriptsHtml;
+
+            // Add event listeners for new copy buttons
+            document.querySelectorAll('.copy-single-script-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const scriptToCopy = event.target.dataset.script;
+                    if (navigator.clipboard && scriptToCopy) {
+                        navigator.clipboard.writeText(scriptToCopy).then(() => {
+                            const originalText = event.target.innerText;
+                            event.target.innerText = '복사 완료!';
+                            setTimeout(() => {
+                                event.target.innerText = originalText;
+                            }, 2000);
+                            editedScriptInput.value = scriptToCopy; // Also copy to the edit textarea
                         }).catch(err => {
                             console.error('Copy failed', err);
                         });
@@ -275,5 +392,89 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             alert("복사할 내용이 없거나 브라우저가 지원하지 않습니다.");
         }
+    });
+
+    // Regenerate button click
+    regenerateBtn.addEventListener('click', () => {
+        const topic = topicInput.value;
+        const tone = toneSelect.value;
+        const keyword = keywordInput.value;
+        const scriptLength = scriptLengthSelect.value;
+        const platform = platformSelect.value;
+        const numVariations = numVariationsSelect.value;
+        const targetAudience = targetAudienceSelect.value;
+        const editedScript = editedScriptInput.value; // Get the edited script content
+
+        if (!editedScript) {
+            alert('수정된 대본 내용이 없습니다!');
+            return;
+        }
+
+        scriptOutput.innerHTML = 'AI가 수정된 대본을 바탕으로 다시 생성하고 있습니다...';
+
+        fetch('/regenerate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userToken}`
+            },
+            body: JSON.stringify({ topic, tone, keyword, scriptLength, platform, numVariations, targetAudience, editedScript }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            let allScriptsHtml = '';
+            let scriptsToDisplay = [];
+
+            if (Array.isArray(data.script)) {
+                scriptsToDisplay = data.script;
+            } else if (typeof data.script === 'string' && data.script.includes('---SCRIPT_SEPARATOR---')) {
+                scriptsToDisplay = data.script.split('---SCRIPT_SEPARATOR---').map(s => s.trim()).filter(s => s.length > 0);
+            } else {
+                scriptsToDisplay = [data.script];
+            }
+
+            if (scriptsToDisplay.length === 0) {
+                allScriptsHtml = '<p>생성된 대본이 없습니다. 다시 시도해주세요.</p>';
+            } else {
+                scriptsToDisplay.forEach((script, index) => {
+                    allScriptsHtml += `
+                        <div class="script-variation">
+                            <h3>대본 #${index + 1}</h3>
+                            <div class="generated-script-content">${script}</div>
+                            <div class="script-actions">
+                                <button class="copy-single-script-btn" data-script="${script.replace(/"/g, '&quot;')}">이 대본 복사</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                editedScriptInput.value = scriptsToDisplay[0]; // Update the editable textarea with the first new script
+            }
+            scriptOutput.innerHTML = allScriptsHtml;
+
+            document.querySelectorAll('.copy-single-script-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const scriptToCopy = event.target.dataset.script;
+                    if (navigator.clipboard && scriptToCopy) {
+                        navigator.clipboard.writeText(scriptToCopy).then(() => {
+                            const originalText = event.target.innerText;
+                            event.target.innerText = '복사 완료!';
+                            setTimeout(() => {
+                                event.target.innerText = originalText;
+                            }, 2000);
+                            editedScriptInput.value = scriptToCopy; // Also copy to the edit textarea
+                        }).catch(err => {
+                            console.error('Copy failed', err);
+                        });
+                    }
+                });
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            scriptOutput.innerHTML = `대본 다시 생성에 실패했습니다. 오류: ${error.message}`;
+        });
     });
 });

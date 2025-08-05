@@ -57,10 +57,16 @@
             <option value="professionals">전문가</option>
         </select>
         <button id="generate-btn">대본 생성하기</button>
+        <button id="regenerate-same-btn">다시 생성하기</button>
         <button id="upgrade-btn">프리미엄으로 업그레이드</button>
         <div id="result-container">
             <h2>생성된 대본: <button id="copy-btn">복사하기</button></h2>
             <div id="script-output"></div>
+            <div id="edit-section" style="display: none;">
+                <h3>대본 수정 및 다시 생성</h3>
+                <textarea id="edited-script-input" rows="15" placeholder="여기에 대본을 수정하세요..."></textarea>
+                <button id="regenerate-btn">수정된 내용으로 다시 생성</button>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>

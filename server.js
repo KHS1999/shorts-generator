@@ -337,6 +337,9 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         const parsedScriptLength = parseInt(scriptLength, 10); // Ensure scriptLength is an integer
         const parsedNumVariations = parseInt(numVariations, 10); // Ensure numVariations is an integer
 
+        // Escape backticks in editedScript to prevent SyntaxError in template literal
+        const escapedEditedScript = editedScript ? editedScript.replace(/`/g, '`') : null;
+
         // Check if user is premium to use keyword feature
         if (keyword && isPremiumStatus !== 1) { 
             return res.status(403).json({ error: '키워드 포함 기능은 프리미엄 사용자만 이용할 수 있습니다.' });
@@ -416,7 +419,7 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
 
         **Provided Script for Reference/Refinement:**
         ```
-        ${editedScript}
+        ${escapedEditedScript}
         ```
 
         Generate the refined script now.

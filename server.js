@@ -410,10 +410,7 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         ` : ''}
 
         Now, begin the creative process.
-        `;
-
-        if (editedScript) {
-            basePrompt += `
+        ${editedScript ? `
         **Refinement Task:**
         You are provided with an existing script below. Your task is to refine and regenerate it based on the original parameters (topic, tone, length, platform, audience, keyword) and the content of the provided script. Focus on improving its quality, flow, and adherence to the specified tone and platform directives. Do NOT simply repeat the provided script; enhance it.
 
@@ -423,8 +420,8 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         ```
 
         Generate the refined script now.
+        ` : ''}
         `;
-        }
 
         let finalScripts = [];
         for (let i = 0; i < parsedNumVariations; i++) {

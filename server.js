@@ -385,27 +385,7 @@ async function generateScriptAndRespond(req, res, topic, tone, isPremiumStatus, 
         The video must have a **${tone}** tone and be tailored for the **${targetAudience}** audience.
 
         **Platform-Specific Directives:**
-        ${(() => {
-            switch (platform) {
-                case 'youtube_shorts':
-                    return `
-        **Platform:** YouTube Shorts
-        **Strategy:** Focus on a strong narrative arc, even within the short timeframe. Use high-quality visuals and a clear, compelling voiceover. The goal is retention and encouraging viewers to check out your channel. Use a cinematic BGM.
-                    `;
-                case 'tiktok':
-                    return `
-        **Platform:** TikTok
-        **Strategy:** Leverage trending audio or concepts, but give it a unique, high-quality twist. The first second is critical. Use rapid, dynamic cuts and engaging text overlays. The vibe should be energetic and authentic.
-                    `;
-                case 'instagram_reels':
-                    return `
-        **Platform:** Instagram Reels
-        **Strategy:** Aesthetics are key. Create a visually stunning video with a sophisticated feel. Use beautiful color grading and artistic shots. The audio should be elegant and complementary to the visuals. Encourage shares and saves with a valuable, beautifully presented takeaway.
-                    `;
-                default:
-                    return '';
-            }
-        })()}
+        ${platformInstruction}
 
         **Keyword Integration:**
         ${keyword ? `
